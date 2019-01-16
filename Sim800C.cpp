@@ -235,7 +235,7 @@ void Sim800C::PowerOff()
 	digitalWrite(DEFAULT_POWER_PIN,HIGH);
 	delay(1700);
 	//Or
-	//Put_String_To_Usart("AT+CPOWD=1",1);
+	//HwSwSerial.print(F("AT+CPOWD=1",1);
 }
 
 void Sim800C::reset()
@@ -293,9 +293,8 @@ bool Sim800C::answerCall()
 }
 
 
-void  Sim800C::callNumber(String number)
+bool Sim800C::callNumber(String number)
 {
-    Serial.println("ATD"+number+";\r\n");
     return send_cmd_wait_reply("ATD"+number+";\r\n",RESPON_OK,30000);
 }
 
@@ -326,7 +325,6 @@ bool Sim800C::hangoffCall()
 bool Sim800C::send_cmd_wait_reply(String aCmd,const char*aResponExit,uint32_t aTimeoutMax)
 {
     HwSwSerial.print(aCmd);
-    Serial.println("aCmd");
     _buffer=_readSerial(aTimeoutMax);
     if ( (_buffer.indexOf(aResponExit)) != -1)
     {
@@ -431,6 +429,85 @@ bool Sim800C::delAllSms()
     return send_cmd_wait_reply(F("AT+CMGDA=\"DEL ALL\"\r\n"),RESPON_OK,25000);
 }
 
+uint8_t Sim800C::check_receive_command(String str_out)
+{
+    _buffer=_readSerial(10);
+    int index1,index2;
+    if (_buffer.length()>=6)
+    {
+        if (_buffer.indexOf("+CMTI:")!=-1)   //+CMTI: "SM",i        i=INDEX
+        {
+            //Sms received
+            if(_buffer.length()>=14)
+            {
+                index1=_buffer.indexOf(",");
+			    index2=_buffer.indexOf(cr);
+                if(index1>index2)
+					index2=_buffer.indexOf(cr,index2+1);
+                sms_index=_buffer.substring(index1+1,index2).toInt();
+                if(sms_index>0)
+                    return Sms_received;
+            }
+        }
+        else if (_buffer.indexOf("+CLIP:")!=-1)  //+CLIP: "+983152401442",145,"",,"",0
+        {
+            //Calling
+            if(_buffer.length()>=11)
+            {
+                index1=_buffer.indexOf("\"");
+                index2=_buffer.indexOf("\"",index1+1);
+                str_out=_buffer.substring(index1+4,index2);
+                return Calling_with_number;
+            }
+        }
+        else if (_buffer.indexOf("+CUSD:")!=-1)
+        {
+            index1=_buffer.indexOf("\"");
+            index2=_buffer.lastIndexOf("\"");
+            if(index1==index2 && index1!=-1)
+                index2=_buffer.length();
+            
+            if (index1!=-1 && index2!=-1)
+            {
+                str_out=_buffer.substring(index1,index2);
+            }
+            return CUSD;
+        }
+        else if (_buffer.indexOf("NO CARRIER")!=-1)
+        {
+            return NO_CARRIER;
+        }
+        else if (_buffer.indexOf("RING")!=-1)
+        {
+            return RING;
+        }
+        else if (_buffer.indexOf("NO DIALTONE")!=-1)
+        {
+            return NO_DIALTONE;
+        }
+        else if (_buffer.indexOf("BUSY")!=-1)
+        {
+            return BUSY;
+        }
+        else if (_buffer.indexOf("NO ANSWER")!=-1)
+        {
+            return NO_ANSWER;
+        }
+        else if (_buffer.indexOf("MO RING")!=-1)
+        {
+            return MO_RING;
+        }
+        else if (_buffer.indexOf("MO CONNECTED")!=-1)
+        {
+            return MO_CONNECTED;
+        }
+        else
+        {
+            return NOT_Recog_Data;
+        }
+    }
+    return No_data;
+}
 
 void Sim800C::RTCtime(int *day,int *month, int *year,int *hour,int *minute, int *second)
 {

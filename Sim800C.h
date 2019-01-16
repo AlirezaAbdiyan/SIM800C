@@ -35,9 +35,20 @@
 
 #define RESPON_ERROR	"ERROR\r\n"
 
+#define ctrlz 26 //Ascii character for ctr+z. End of a SMS.
+#define cr    13 //Ascii character for carriage return.
+#define lf    10 //Ascii character for line feed.
+
 #define network_registered1	"0,1" //"+CREG: 0,1"
 
 #define network_registered2	"0,5" //"+CREG: 0,5"
+
+#define No_data               0
+#define Calling_with_number   1
+#define Sms_received          2
+#define NOT_Recog_Data        4
+#define RING                  5
+#define CUSD				  6
 
 enum registration_ret_val_enum
 {
@@ -47,6 +58,17 @@ enum registration_ret_val_enum
 	REG_COMM_LINE_BUSY = 3,
 	
 	REG_LAST_ITEM
+};
+
+enum call_status
+{
+	NO_ANSWER	=7,
+	NO_DIALTONE =8,
+	BUSY        =9,
+	NO_CARRIER  =10,
+	CONNECT     =11,
+	MO_RING     =12,
+	MO_CONNECTED=13
 };
 
 #define SwSerial  SoftwareSerial
@@ -60,7 +82,7 @@ private:
     int _timeout;
     String _buffer;
     bool _sleepMode;
-    uint8_t _functionalityMode;
+    uint8_t _functionalityMode,sms_index;
     String _locationCode;
     String _longitude;
     String _latitude;
@@ -97,7 +119,7 @@ public:
     String getOperator();
 
     bool answerCall();
-    void callNumber(String number);
+    bool callNumber(String number);
     bool hangoffCall();
     uint8_t getCallStatus();
 
@@ -107,6 +129,7 @@ public:
     bool deleteSMS(uint8_t position);
     bool delAllSms();
 
+    uint8_t check_receive_command(String str_out);
 
     String signalQuality();
     void setPhoneFunctionality();
