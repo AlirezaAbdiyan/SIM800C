@@ -129,6 +129,8 @@ public:
     bool deleteSMS(uint8_t position);
     bool delAllSms();
 
+    bool miss_call(String aSenderNumber,uint8_t NumOfTry);
+
     uint8_t check_receive_command(String str_out);
 
     String signalQuality();

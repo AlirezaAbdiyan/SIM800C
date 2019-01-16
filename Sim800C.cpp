@@ -509,6 +509,47 @@ uint8_t Sim800C::check_receive_command(String str_out)
     return No_data;
 }
 
+bool Sim800C::miss_call(String aSenderNumber,uint8_t NumOfTry) //NumOfTry 1-255
+{
+	String str;
+    uint8_t st;
+    uint32_t del;
+	int i;
+    bool _break=false;
+	for (i = 0; i < NumOfTry; i++)
+	{
+		if(callNumber(aSenderNumber)==OK)
+		{
+            del=millis();
+			while(millis()-del<10000 && !_break)
+			{
+				st=check_receive_command(str);
+				switch (st)
+				{
+					case NO_ANSWER:hangoffCall(); i=256;_break=true;
+					break;
+					case NO_DIALTONE: hangoffCall();_break=true;
+					break;
+					case BUSY: hangoffCall();_break=true;
+					break;
+					case MO_RING: hangoffCall(); i=256;_break=true;
+					break;
+					case MO_CONNECTED: hangoffCall(); i=256;_break=true;
+					break;
+					case NO_CARRIER: hangoffCall();_break=true;
+					break;
+				}
+			}
+			delay(300);
+			hangoffCall();
+			delay(1000);
+		}
+		delay(100);
+	}
+	if(i>=256) return OK;
+	return ERROR;
+}
+
 void Sim800C::RTCtime(int *day,int *month, int *year,int *hour,int *minute, int *second)
 {
     HwSwSerial.print(F("at+cclk?\r\n"));
