@@ -18,6 +18,8 @@
 #include <SoftwareSerial.h>
 #include "Arduino.h"
 
+#define SwSerial  SoftwareSerial
+//#define HwSerial  Serial
 
 #define DEFAULT_RX_PIN      10
 #define DEFAULT_TX_PIN 		11
@@ -71,27 +73,25 @@ enum call_status
 	MO_CONNECTED=13
 };
 
-#define SwSerial  SoftwareSerial
-//#define HwSerial  Serial
-
 class Sim800C
 {
 private:
 
     uint32_t _baud;
     int _timeout;
-    String _buffer;
     bool _sleepMode;
-    uint8_t _functionalityMode,sms_index;
-    String _locationCode;
-    String _longitude;
-    String _latitude;
+    uint8_t _functionalityMode;
 
     String _readSerial();
     String _readSerial(uint32_t timeout);
 
+    bool send_cmd_wait_reply(String aCmd,const char*aResponExit,uint32_t aTimeoutMax);
+    bool send_cmd_wait_reply(const __FlashStringHelper *aCmd,const char*aResponExit,uint32_t aTimeoutMax);
 
 public:
+
+    uint8_t sms_index;
+    String SimBuffer;
 
     Sim800C(void);
 
@@ -104,8 +104,6 @@ public:
     uint8_t Setup(void);
 
     uint8_t is_network_registered();
-    bool send_cmd_wait_reply(String aCmd,const char*aResponExit,uint32_t aTimeoutMax);
-    bool send_cmd_wait_reply(const __FlashStringHelper *aCmd,const char*aResponExit,uint32_t aTimeoutMax);
 
     bool setSleepMode(bool state);
     bool getSleepMode();
@@ -131,7 +129,7 @@ public:
 
     bool miss_call(String aSenderNumber,uint8_t NumOfTry);
 
-    uint8_t check_receive_command(String str_out);
+    uint8_t check_receive_command(void);
 
     String signalQuality();
     void setPhoneFunctionality();

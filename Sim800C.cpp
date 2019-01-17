@@ -37,7 +37,7 @@ void Sim800C::begin()
     _sleepMode = 0;
     _functionalityMode = 1;
 
-    _buffer.reserve(BUFFER_RESERVE_MEMORY); // Reserve memory to prevent intern fragmention
+    SimBuffer.reserve(BUFFER_RESERVE_MEMORY); // Reserve memory to prevent intern fragmention
     Setup();
 }
 
@@ -52,7 +52,7 @@ void Sim800C::begin(uint32_t baud)
     _sleepMode = 0;
     _functionalityMode = 1;
 
-    _buffer.reserve(BUFFER_RESERVE_MEMORY); // Reserve memory to prevent intern fragmention
+    SimBuffer.reserve(BUFFER_RESERVE_MEMORY); // Reserve memory to prevent intern fragmention
     Setup();
 }
 
@@ -92,8 +92,8 @@ uint8_t Sim800C::is_network_registered()
 {
     unsigned char connCode;
 	HwSwSerial.print(F("AT+CREG?\r\n")); //+CREG: 0,1
-    _buffer=_readSerial(25000); 
-    if ( ((_buffer.indexOf(network_registered1)) != -1) || ((_buffer.indexOf(network_registered2)) != -1))
+    SimBuffer=_readSerial(25000); 
+    if ( ((SimBuffer.indexOf(network_registered1)) != -1) || ((SimBuffer.indexOf(network_registered2)) != -1))
     {
         //setStatus(READY);
 		delay(1000);
@@ -312,8 +312,8 @@ uint8_t Sim800C::getCallStatus()
 
     */
     HwSwSerial.print (F("AT+CPAS\r\n"));
-    _buffer=_readSerial();
-    return _buffer.substring(_buffer.indexOf("+CPAS: ")+7,_buffer.indexOf("+CPAS: ")+9).toInt();
+    SimBuffer=_readSerial();
+    return SimBuffer.substring(SimBuffer.indexOf("+CPAS: ")+7,SimBuffer.indexOf("+CPAS: ")+9).toInt();
 }
 
 
@@ -325,8 +325,8 @@ bool Sim800C::hangoffCall()
 bool Sim800C::send_cmd_wait_reply(String aCmd,const char*aResponExit,uint32_t aTimeoutMax)
 {
     HwSwSerial.print(aCmd);
-    _buffer=_readSerial(aTimeoutMax);
-    if ( (_buffer.indexOf(aResponExit)) != -1)
+    SimBuffer=_readSerial(aTimeoutMax);
+    if ( (SimBuffer.indexOf(aResponExit)) != -1)
     {
         delay(100);
         return OK;
@@ -338,8 +338,8 @@ bool Sim800C::send_cmd_wait_reply(String aCmd,const char*aResponExit,uint32_t aT
 bool Sim800C::send_cmd_wait_reply(const __FlashStringHelper *aCmd,const char*aResponExit,uint32_t aTimeoutMax)
 {
     HwSwSerial.print(aCmd);
-    _buffer=_readSerial(aTimeoutMax);
-    if ( (_buffer.indexOf(aResponExit)) != -1)
+    SimBuffer=_readSerial(aTimeoutMax);
+    if ( (SimBuffer.indexOf(aResponExit)) != -1)
     {
         delay(100);
         return OK;
@@ -355,14 +355,14 @@ bool Sim800C::sendSms(char* number,char* text)
     HwSwSerial.print (F("AT+CMGS=\""));  	// command to send sms
     HwSwSerial.print (number);
     HwSwSerial.print(F("\"\r\n"));
-    _buffer=_readSerial(10000);
-    if ( (_buffer.indexOf(">")) != -1)
+    SimBuffer=_readSerial(10000);
+    if ( (SimBuffer.indexOf(">")) != -1)
     {
         HwSwSerial.print(text);
-        HwSwSerial.print((char)26);
-        _buffer=_readSerial(60000);
+        HwSwSerial.print((char)ctrlz);
+        SimBuffer=_readSerial(60000);
         //expect CMGS:xxx   , where xxx is a number,for the sending sms.
-        if ( (_buffer.indexOf("ER")) == -1)
+        if ( (SimBuffer.indexOf("ER")) == -1)
         {
             return OK;
         }    
@@ -380,13 +380,13 @@ String Sim800C::getNumberSms(uint8_t index)
 
         OK
 	*/
-    _buffer=readSms(index);
-    //Serial.println(_buffer.length());
-    if (_buffer.length() > 10) //avoid empty sms
+    SimBuffer=readSms(index);
+    //Serial.println(SimBuffer.length());
+    if (SimBuffer.length() > 10) //avoid empty sms
     {
-        uint8_t _idx1=_buffer.indexOf("+CMGR:");
-        _idx1=_buffer.indexOf("\",\"",_idx1+1);
-        return _buffer.substring(_idx1+3,_buffer.indexOf("\", \"",_idx1+4));
+        uint8_t _idx1=SimBuffer.indexOf("+CMGR:");
+        _idx1=SimBuffer.indexOf("\",\"",_idx1+1);
+        return SimBuffer.substring(_idx1+3,SimBuffer.indexOf("\", \"",_idx1+4));
     }
     else
     {
@@ -400,10 +400,10 @@ String Sim800C::readSms(uint8_t index)
     HwSwSerial.print (F("AT+CMGR="));
     HwSwSerial.print (index);
     HwSwSerial.print ("\r\n");
-    _buffer=_readSerial();
-    if (_buffer.indexOf("CMGR:")!=-1)
+    SimBuffer=_readSerial();
+    if (SimBuffer.indexOf("CMGR:")!=-1)
     {
-        return _buffer;
+        return SimBuffer;
     }
     else return "";
 }
@@ -414,9 +414,9 @@ bool Sim800C::deleteSMS(uint8_t position)
     HwSwSerial.print(position);
     HwSwSerial.print(F("\r\n"));
 
-    _buffer=_readSerial(25000);
+    SimBuffer=_readSerial(25000);
 
-	if ( (_buffer.indexOf("ER")) == -1)
+	if ( (SimBuffer.indexOf("ER")) == -1)
     {
         return OK;
     }
@@ -429,75 +429,76 @@ bool Sim800C::delAllSms()
     return send_cmd_wait_reply(F("AT+CMGDA=\"DEL ALL\"\r\n"),RESPON_OK,25000);
 }
 
-uint8_t Sim800C::check_receive_command(String str_out)
+uint8_t Sim800C::check_receive_command(void)
 {
-    _buffer=_readSerial(10);
+    SimBuffer=_readSerial(10);
     int index1,index2;
-    if (_buffer.length()>=6)
+    if (SimBuffer.length()>=6)
     {
-        if (_buffer.indexOf("+CMTI:")!=-1)   //+CMTI: "SM",i        i=INDEX
+        //Serial.println(SimBuffer);
+        if (SimBuffer.indexOf("+CMTI:")!=-1)   //+CMTI: "SM",i        i=INDEX
         {
             //Sms received
-            if(_buffer.length()>=14)
+            if(SimBuffer.length()>=14)
             {
-                index1=_buffer.indexOf(",");
-			    index2=_buffer.indexOf(cr);
+                index1=SimBuffer.indexOf(",");
+			    index2=SimBuffer.indexOf(cr);
                 if(index1>index2)
-					index2=_buffer.indexOf(cr,index2+1);
-                sms_index=_buffer.substring(index1+1,index2).toInt();
+					index2=SimBuffer.indexOf(cr,index2+1);
+                sms_index=SimBuffer.substring(index1+1,index2).toInt();
                 if(sms_index>0)
                     return Sms_received;
             }
         }
-        else if (_buffer.indexOf("+CLIP:")!=-1)  //+CLIP: "+983152401442",145,"",,"",0
+        else if (SimBuffer.indexOf("+CLIP:")!=-1)  //+CLIP: "+983152401442",145,"",,"",0
         {
             //Calling
-            if(_buffer.length()>=11)
+            if(SimBuffer.length()>=11)
             {
-                index1=_buffer.indexOf("\"");
-                index2=_buffer.indexOf("\"",index1+1);
-                str_out=_buffer.substring(index1+4,index2);
+                index1=SimBuffer.indexOf("\"");
+                index2=SimBuffer.indexOf("\"",index1+1);
+                SimBuffer=SimBuffer.substring(index1+4,index2);
                 return Calling_with_number;
             }
         }
-        else if (_buffer.indexOf("+CUSD:")!=-1)
+        else if (SimBuffer.indexOf("+CUSD:")!=-1)
         {
-            index1=_buffer.indexOf("\"");
-            index2=_buffer.lastIndexOf("\"");
+            index1=SimBuffer.indexOf("\"");
+            index2=SimBuffer.lastIndexOf("\"");
             if(index1==index2 && index1!=-1)
-                index2=_buffer.length();
+                index2=SimBuffer.length();
             
             if (index1!=-1 && index2!=-1)
             {
-                str_out=_buffer.substring(index1,index2);
+                SimBuffer=SimBuffer.substring(index1,index2);
             }
             return CUSD;
         }
-        else if (_buffer.indexOf("NO CARRIER")!=-1)
+        else if (SimBuffer.indexOf("NO CARRIER")!=-1)
         {
             return NO_CARRIER;
         }
-        else if (_buffer.indexOf("RING")!=-1)
+        /*else if (SimBuffer.indexOf("RING")!=-1)
         {
             return RING;
-        }
-        else if (_buffer.indexOf("NO DIALTONE")!=-1)
+        }*/
+        else if (SimBuffer.indexOf("NO DIALTONE")!=-1)
         {
             return NO_DIALTONE;
         }
-        else if (_buffer.indexOf("BUSY")!=-1)
+        else if (SimBuffer.indexOf("BUSY")!=-1)
         {
             return BUSY;
         }
-        else if (_buffer.indexOf("NO ANSWER")!=-1)
+        else if (SimBuffer.indexOf("NO ANSWER")!=-1)
         {
             return NO_ANSWER;
         }
-        else if (_buffer.indexOf("MO RING")!=-1)
+        else if (SimBuffer.indexOf("MO RING")!=-1)
         {
             return MO_RING;
         }
-        else if (_buffer.indexOf("MO CONNECTED")!=-1)
+        else if (SimBuffer.indexOf("MO CONNECTED")!=-1)
         {
             return MO_CONNECTED;
         }
@@ -511,7 +512,6 @@ uint8_t Sim800C::check_receive_command(String str_out)
 
 bool Sim800C::miss_call(String aSenderNumber,uint8_t NumOfTry) //NumOfTry 1-255
 {
-	String str;
     uint8_t st;
     uint32_t del;
 	int i;
@@ -523,7 +523,7 @@ bool Sim800C::miss_call(String aSenderNumber,uint8_t NumOfTry) //NumOfTry 1-255
             del=millis();
 			while(millis()-del<10000 && !_break)
 			{
-				st=check_receive_command(str);
+				st=check_receive_command();
 				switch (st)
 				{
 					case NO_ANSWER:hangoffCall(); i=256;_break=true;
@@ -554,21 +554,21 @@ void Sim800C::RTCtime(int *day,int *month, int *year,int *hour,int *minute, int 
 {
     HwSwSerial.print(F("at+cclk?\r\n"));
     // if respond with ERROR try one more time.
-    _buffer=_readSerial();
-    if ((_buffer.indexOf("ERR"))!=-1)
+    SimBuffer=_readSerial();
+    if ((SimBuffer.indexOf("ERR"))!=-1)
     {
         delay(50);
         HwSwSerial.print(F("at+cclk?\r\n"));
     }
-    if ((_buffer.indexOf("ERR"))==-1)
+    if ((SimBuffer.indexOf("ERR"))==-1)
     {
-        _buffer=_buffer.substring(_buffer.indexOf("\"")+1,_buffer.lastIndexOf("\"")-1);
-        *year=_buffer.substring(0,2).toInt();
-        *month= _buffer.substring(3,5).toInt();
-        *day=_buffer.substring(6,8).toInt();
-        *hour=_buffer.substring(9,11).toInt();
-        *minute=_buffer.substring(12,14).toInt();
-        *second=_buffer.substring(15,17).toInt();
+        SimBuffer=SimBuffer.substring(SimBuffer.indexOf("\"")+1,SimBuffer.lastIndexOf("\"")-1);
+        *year=SimBuffer.substring(0,2).toInt();
+        *month= SimBuffer.substring(3,5).toInt();
+        *day=SimBuffer.substring(6,8).toInt();
+        *hour=SimBuffer.substring(9,11).toInt();
+        *minute=SimBuffer.substring(12,14).toInt();
+        *second=SimBuffer.substring(15,17).toInt();
     }
 }
 
@@ -576,11 +576,11 @@ void Sim800C::RTCtime(int *day,int *month, int *year,int *hour,int *minute, int 
 String Sim800C::dateNet()
 {
     HwSwSerial.print(F("AT+CIPGSMLOC=2,1\r\n "));
-    _buffer=_readSerial();
+    SimBuffer=_readSerial();
 
-    if (_buffer.indexOf("OK")!=-1 )
+    if (SimBuffer.indexOf("OK")!=-1 )
     {
-        return _buffer.substring(_buffer.indexOf(":")+2,(_buffer.indexOf("OK")-4));
+        return SimBuffer.substring(SimBuffer.indexOf(":")+2,(SimBuffer.indexOf("OK")-4));
     }
     else
         return "0";
