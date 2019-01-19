@@ -52,6 +52,8 @@
 #define RING                  5
 #define CUSD				  6
 
+#define NoSMS                 255
+
 enum registration_ret_val_enum
 {
 	REG_NOT_REGISTERED = 0,
@@ -73,6 +75,18 @@ enum call_status
 	MO_CONNECTED=13
 };
 
+enum getsms_ret_val_enum
+{
+	GETSMS_NO_SMS       = 2,
+	GETSMS_UNREAD_SMS   = 3,
+	GETSMS_READ_SMS     = 4,
+	GETSMS_OTHER_SMS    = 5,
+	GETSMS_NOT_AUTH_SMS = 6,
+	GETSMS_AUTH_SMS     = 7,
+
+	GETSMS_LAST_ITEM
+};
+
 class Sim800C
 {
 private:
@@ -90,7 +104,7 @@ private:
 
 public:
 
-    uint8_t sms_index;
+    uint8_t sms_index=NoSMS;
     String SimBuffer;
 
     Sim800C(void);
@@ -122,8 +136,7 @@ public:
     uint8_t getCallStatus();
 
     bool sendSms(char* number,char* text);
-    String readSms(uint8_t index);
-    String getNumberSms(uint8_t index);
+    uint8_t readSms(uint8_t index, char * phone_number, char * SMS_text);
     bool deleteSMS(uint8_t position);
     bool delAllSms();
 

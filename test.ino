@@ -4,13 +4,14 @@
 
 Sim800C GSM;
 
-String str;
+//String str,;
+char phone_number[15],str[50];
 uint8_t c;
 
 void setup() {
   Serial.begin(9600);
   GSM.begin(9600);
-  GSM.callNumber("*555#");
+  //GSM.callNumber("*555#");
   //GSM.miss_call("09132383246",2);
 
 }
@@ -64,14 +65,16 @@ void loop()
       Serial.println("NOT Recog Data");
     break; 
   };
-  /*str=GSM.readSms(1);
-  if(str!="")
+
+  if(GSM.sms_index!=NoSMS)
   {
-    Serial.println(str);  
-    Serial.println(GSM.getNumberSms(1));
-    GSM.delAllSms();
-  }*/
-  //Serial.println(GSM.getCallStatus());
-  //delay(1000);
+    if(GSM.readSms(GSM.sms_index,phone_number,str)==GETSMS_UNREAD_SMS)  
+    if(str!="")
+    {
+      Serial.println(str);  
+      Serial.println(phone_number);
+      //GSM.delAllSms();
+    }
+  }
 }
 

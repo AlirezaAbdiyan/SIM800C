@@ -371,41 +371,43 @@ bool Sim800C::sendSms(char* number,char* text)
     return ERROR;
 }
 
-
-String Sim800C::getNumberSms(uint8_t index)
+uint8_t Sim800C::readSms(uint8_t index,char * phone_number,char * SMS_text)
 {
-    /* +CMGR: "REC UNREAD","+989132383246", "","14/05/08,10:49:04+14"
-			 
-        MESSAGE TEXT
-
-        OK
-	*/
-    SimBuffer=readSms(index);
-    //Serial.println(SimBuffer.length());
-    if (SimBuffer.length() > 10) //avoid empty sms
-    {
-        uint8_t _idx1=SimBuffer.indexOf("+CMGR:");
-        _idx1=SimBuffer.indexOf("\",\"",_idx1+1);
-        return SimBuffer.substring(_idx1+3,SimBuffer.indexOf("\", \"",_idx1+4));
-    }
-    else
-    {
-        return "";
-    }
-}
-
-
-String Sim800C::readSms(uint8_t index)
-{
+    uint8_t ret_val=ERROR;
+    int index1,index2;
     HwSwSerial.print (F("AT+CMGR="));
     HwSwSerial.print (index);
     HwSwSerial.print ("\r\n");
-    SimBuffer=_readSerial();
-    if (SimBuffer.indexOf("CMGR:")!=-1)
+    SimBuffer=_readSerial(5000);
+    /* +CMGR: "REC UNREAD","+989132383246","","19/01/17,10:06:21+14"
+        
+        MESSAGE TEXT
+
+        OK
+    */
+    if (SimBuffer.indexOf(RESPON_OK)!=-1)
     {
-        return SimBuffer;
+        ret_val=GETSMS_NO_SMS;
+        if (SimBuffer.indexOf("+CMGR:")!=-1) 
+		{
+			if (SimBuffer.indexOf("REC UNREAD")!=-1) 			
+				ret_val=GETSMS_UNREAD_SMS;	
+			else if (SimBuffer.indexOf("REC READ")!=-1)
+				ret_val=GETSMS_READ_SMS;
+			else
+				ret_val=GETSMS_OTHER_SMS;
+
+            index1=SimBuffer.indexOf(",")+5;
+            index2=SimBuffer.indexOf(",",index1)-1;  
+            SimBuffer.substring(index1,index2).toCharArray(phone_number, index2-index1+1);   
+            
+            index1=SimBuffer.indexOf(lf,index2)+1;
+            index2=SimBuffer.length();    
+            index2-=8;   //Cr,Lf,Cr,Lf OK Cr,Lf   
+            SimBuffer.substring(index1,index2).toCharArray(SMS_text, index2-index1+1);  
+        }
     }
-    else return "";
+    else return ret_val;
 }
 
 bool Sim800C::deleteSMS(uint8_t position)
