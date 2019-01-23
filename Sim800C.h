@@ -75,6 +75,14 @@ enum call_status
 	MO_CONNECTED=13
 };
 
+enum WhiteList
+{
+	Disable	=0,
+	Enable_only_call =1,
+	Enable_only_SMS =2,
+	Enable_call_and_SMS =3
+};
+
 enum getsms_ret_val_enum
 {
 	GETSMS_NO_SMS       = 2,
@@ -140,6 +148,8 @@ public:
     bool deleteSMS(uint8_t position);
     bool delAllSms();
 
+    bool whiteList(uint8_t Command,uint8_t index,char * PhoneNumber); //index=1-30
+    uint8_t whiteListStatus(char * PhoneNumbers);
     bool miss_call(String aSenderNumber,uint8_t NumOfTry);
 
     uint8_t check_receive_command(void);

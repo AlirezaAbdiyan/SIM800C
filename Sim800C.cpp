@@ -348,6 +348,52 @@ bool Sim800C::send_cmd_wait_reply(const __FlashStringHelper *aCmd,const char*aRe
     return ERROR;
 }
 
+bool Sim800C::whiteList(uint8_t Command,uint8_t index,char * PhoneNumber) //index=1-30
+{
+    if(Command==Disable) 
+    {
+        return send_cmd_wait_reply(F("AT+CWHITELIST=0\r\n"),RESPON_OK,30000);    
+    }  
+    HwSwSerial.print (F("AT+CWHITELIST="));  	// command to send sms
+    HwSwSerial.print (Command);
+    HwSwSerial.print (F(",")); 
+    HwSwSerial.print (index);
+    HwSwSerial.print (F(",")); 
+    HwSwSerial.print (PhoneNumber);
+    HwSwSerial.print(F("\r\n"));
+    SimBuffer=_readSerial(20000);
+    if ( (SimBuffer.indexOf(RESPON_OK)) != -1)
+    {
+        return OK;    
+    }  
+    return ERROR;
+}
+
+uint8_t Sim800C::whiteListStatus(char * PhoneNumbers)
+{
+    int index1,index2;
+    uint8_t retVal=255;
+    if(send_cmd_wait_reply(F("AT+CWHITELIST?\r\n"),RESPON_OK,30000)==OK)
+    {
+        index1=SimBuffer.indexOf("+CWHITELIST:");
+        if(index1!=-1)
+        {
+            index1=SimBuffer.indexOf(",",index1);
+            
+            if(index1!=-1)
+            {
+                retVal=SimBuffer.substring(index1-1,index1).toInt();
+                index1++;
+                index2=SimBuffer.indexOf(RESPON_OK);
+                if(index2!=-1)
+                {
+                    SimBuffer.substring(index1,index2).toCharArray(PhoneNumbers, index2-index1+1);  
+                }    
+            }
+        }
+    }
+    return retVal;
+}
 
 bool Sim800C::sendSms(char* number,char* text)
 {

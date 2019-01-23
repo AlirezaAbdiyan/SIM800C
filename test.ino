@@ -5,22 +5,21 @@
 Sim800C GSM;
 
 //String str,;
-char phone_number[15],str[50];
-uint8_t c;
+char phone_number[15],str[100];
 
 void setup() {
   Serial.begin(9600);
   GSM.begin(9600);
   //GSM.callNumber("*555#");
   //GSM.miss_call("09132383246",2);
-
+  Serial.println(GSM.whiteListStatus(str));
+  Serial.println(str);
 }
 
 void loop() 
 {
   //GSM.miss_call("09138696632",2);
-  c=GSM.check_receive_command();
-  switch(c)
+  switch(GSM.check_receive_command())
   {
     case Sms_received:
       Serial.print("Sms received, sms index is: ");
