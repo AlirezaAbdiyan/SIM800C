@@ -73,10 +73,14 @@ uint8_t Sim800C::Setup(void)
     send_cmd_wait_reply("AT+IPR="+String(_baud)+"\r\n",RESPON_OK,10000);
     //no cmd echo
     send_cmd_wait_reply(F("ATE0\r\n"), RESPON_OK, 500000);
+    //Set SMS Text Mode Parameters
+    send_cmd_wait_reply(F("AT+CSMP=17,167,0,0\r\n"), RESPON_OK, 500000);
     //FOR ENABLE TO DISPLAY WHEN RING HOST PHONE => SIM SEND "MO RING" AND WHEN CONNECT SIM SEND "MO CONNECTED"
     send_cmd_wait_reply(F("AT+MORING=1\r\n"),RESPON_OK, 500000);
     //ENABLE CALL
     send_cmd_wait_reply(F("AT+CLIR=0\r\n"),RESPON_OK, 500000);
+    //USSD text mode enable
+    send_cmd_wait_reply(F("AT+CUSD=1\r\n"),RESPON_OK, 500000);
     //text mode
     send_cmd_wait_reply(F("AT+CMGF=1\r\n"),RESPON_OK, 500000);
     //storage all to Sim card
@@ -400,7 +404,8 @@ bool Sim800C::sendSms(char* number,char* text)
     // Can take up to 60 seconds
     HwSwSerial.print (F("AT+CMGS=\""));  	// command to send sms
     HwSwSerial.print (number);
-    HwSwSerial.print(F("\"\r\n"));
+    HwSwSerial.print(F("\"\r"));
+    delay(100);
     SimBuffer=_readSerial(10000);
     if ( (SimBuffer.indexOf(">")) != -1)
     {
@@ -518,9 +523,9 @@ uint8_t Sim800C::check_receive_command(void)
             
             if (index1!=-1 && index2!=-1)
             {
-                SimBuffer=SimBuffer.substring(index1,index2);
+                SimBuffer=SimBuffer.substring(index1+1,index2);
+                return CUSD;
             }
-            return CUSD;
         }
         else if (SimBuffer.indexOf("NO CARRIER")!=-1)
         {

@@ -5,15 +5,18 @@
 Sim800C GSM;
 
 //String str,;
-char phone_number[15],str[100];
+char phone_number[15],str[400];
 
 void setup() {
   Serial.begin(9600);
   GSM.begin(9600);
-  //GSM.callNumber("*555#");
+  //GSM.delAllSms();
+  //GSM.callNumber("*140#");
   //GSM.miss_call("09132383246",2);
-  Serial.println(GSM.whiteListStatus(str));
-  Serial.println(str);
+  //GSM.whiteList(Enable_call_and_SMS,4,"9131234568");
+  //Serial.println(GSM.whiteListStatus(str));
+  //Serial.println(str);
+  //GSM.sendSms("09132383246","Test send sms");
 }
 
 void loop() 
