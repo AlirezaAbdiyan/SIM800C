@@ -148,7 +148,7 @@ public:
     bool deleteSMS(uint8_t position);
     bool delAllSms();
 
-    bool whiteList(uint8_t Command,uint8_t index,char * PhoneNumber); //index=1-30
+    bool AddToWhiteList(uint8_t Command,uint8_t index,char * PhoneNumber); //index=1-30
     uint8_t whiteListStatus(char * PhoneNumbers);
     bool miss_call(String aSenderNumber,uint8_t NumOfTry);
 

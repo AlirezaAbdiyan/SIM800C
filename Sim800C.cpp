@@ -352,7 +352,7 @@ bool Sim800C::send_cmd_wait_reply(const __FlashStringHelper *aCmd,const char*aRe
     return ERROR;
 }
 
-bool Sim800C::whiteList(uint8_t Command,uint8_t index,char * PhoneNumber) //index=1-30
+bool Sim800C::AddToWhiteList(uint8_t Command,uint8_t index,char * PhoneNumber) //index=1-30
 {
     if(Command==Disable) 
     {

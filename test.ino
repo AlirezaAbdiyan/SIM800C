@@ -13,9 +13,11 @@ void setup() {
   //GSM.delAllSms();
   //GSM.callNumber("*140#");
   //GSM.miss_call("09132383246",2);
-  //GSM.whiteList(Enable_call_and_SMS,4,"9131234568");
-  //Serial.println(GSM.whiteListStatus(str));
-  //Serial.println(str);
+  //GSM.AddToWhiteList(Enable_call_and_SMS,4,"9131234568");
+  
+  Serial.println(GSM.whiteListStatus(str));
+  Serial.println(str);
+
   //GSM.sendSms("09132383246","Test send sms");
 }
 
